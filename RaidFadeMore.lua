@@ -2,20 +2,22 @@
 --- Author: Ketho (EU-Boulderfist)		---
 --- License: Public Domain				---
 --- Created: 2011.11.06					---
---- Version: 0.2 [2014.08.10]			---
+--- Version: 0.3 [2014.08.10]			---
 -------------------------------------------
 --- Curse			http://www.curse.com/addons/wow/raidfademore
---- WoWInterface	x
+--- WoWInterface	http://www.wowinterface.com/downloads/info23030-RaidFadeMore.html
 
 local NAME = ...
 local db
 
+local UnitInRange = UnitInRange
+
 local defaults = {
-	db_version = .1,
+	db_version = .3,
 	
+	timeToFade = .5,
 	minAlpha = .2,
 	maxAlpha = 1,
-	
 	minBgAlpha = .5,
 	maxBgAlpha = 1,
 }
@@ -44,12 +46,38 @@ local function CreateSlider(parent, point, relativeTo, relativePoint, x, y, labe
 	return s
 end
 
+local FADEFRAMES = FADEFRAMES
+local wakeUp = CreateFrame("Frame")
+
+-- need a custom UIFrameFade function, since its secure and calls :Show (in combat)
+local function FrameFade(frame, mode, timeToFade, startAlpha, endAlpha)
+	local fadeInfo = {}
+	fadeInfo.mode = mode
+	fadeInfo.timeToFade = timeToFade
+	fadeInfo.startAlpha = startAlpha
+	fadeInfo.endAlpha = endAlpha
+	frame:SetAlpha(fadeInfo.startAlpha)
+	frame.fadeInfo = fadeInfo
+	
+	for _, v in pairs(FADEFRAMES) do
+		if v == frame then
+			return
+		end
+	end
+	tinsert(FADEFRAMES, frame)
+	
+	-- dummy frame to poke the Blizzard frameFadeManager awake, since its not directly accessible
+	UIFrameFadeIn(wakeUp, 0)
+end
+
 local f = CreateFrame("Frame")
 
 function f:OnEvent(event, addon)
 	if addon ~= NAME then return end
 	
-	RaidFadeMoreDB = RaidFadeMoreDB or CopyTable(defaults)
+	if not RaidFadeMoreDB or defaults.db_version > RaidFadeMoreDB.db_version then
+		RaidFadeMoreDB = CopyTable(defaults)
+	end
 	db = RaidFadeMoreDB
 	
 	local parent = "CompactUnitFrameProfilesGeneralOptionsFrame"
@@ -58,16 +86,29 @@ function f:OnEvent(event, addon)
 	
 	-- FrameXML\CompactUnitFrame.lua
 	hooksecurefunc("CompactUnitFrame_UpdateInRange", function(frame)
+		if FADEFRAMES[frame] then return end
+		
 		local inRange, checkedRange = UnitInRange(frame.displayedUnit)
 		if checkedRange and not inRange then
-			frame:SetAlpha(db.minAlpha)
-			frame.background:SetAlpha(db.minBgAlpha)
+			if f[frame] == db.minAlpha then
+				frame:SetAlpha(db.minAlpha)
+				frame.background:SetAlpha(db.minBgAlpha)
+			else
+				FrameFade(frame, "OUT", db.timeToFade, db.maxAlpha, db.minAlpha)
+				FrameFade(frame.background, "OUT", db.timeToFade, db.maxBgAlpha, db.minBgAlpha)
+				f[frame] = db.minAlpha
+			end
 		else
-			frame:SetAlpha(db.maxAlpha)
-			frame.background:SetAlpha(db.maxBgAlpha)
+			if f[frame] == db.maxAlpha then
+				frame:SetAlpha(db.maxAlpha)
+				frame.background:SetAlpha(db.maxBgAlpha)
+			else
+				FrameFade(frame, "IN", db.timeToFade, db.minAlpha, db.maxAlpha)
+				FrameFade(frame.background, "IN", db.timeToFade, db.minBgAlpha, db.maxBgAlpha)
+				f[frame] = db.maxAlpha
+			end
 		end
 	end)
-	
 	self:UnregisterEvent(event)
 end
 
