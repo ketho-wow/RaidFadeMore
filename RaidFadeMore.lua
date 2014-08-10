@@ -1,14 +1,17 @@
 -------------------------------------------
 --- Author: Ketho (EU-Boulderfist)		---
 --- License: Public Domain				---
---- Created: 2011.11.06					---
---- Version: 0.3 [2014.08.10]			---
+--- Created: 2014.08.10					---
+--- Version: 0.4 [2014.08.10]			---
 -------------------------------------------
 --- Curse			http://www.curse.com/addons/wow/raidfademore
 --- WoWInterface	http://www.wowinterface.com/downloads/info23030-RaidFadeMore.html
 
 local NAME = ...
 local db
+
+local list = {}
+local isSliding
 
 local UnitInRange = UnitInRange
 
@@ -38,6 +41,25 @@ local function CreateSlider(parent, point, relativeTo, relativePoint, x, y, labe
 		s.curLabel:SetText(v)
 	end)
 	
+	-- prevent fading transitions while moving the slider
+	if option == "minAlpha" then
+		s:SetScript("OnMouseDown", function(self, button)
+			isSliding = true
+		end)
+		
+		s:SetScript("OnMouseUp", function(self, button)
+			isSliding = false
+			
+			-- prevent fading transitions after moving the slider
+			for frame in pairs(list) do
+				if frame.displayedUnit then -- list is not up to date anymore after leaving a raid
+					local inRange, checkedRange = UnitInRange(frame.displayedUnit)
+					list[frame] = (checkedRange and not inRange) and db[option] or db.maxAlpha
+				end
+			end
+		end)
+	end
+	
 	-- fontstring
 	s.curLabel = s:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 	s.curLabel:SetPoint("TOP", s, "BOTTOM")
@@ -56,7 +78,7 @@ local function FrameFade(frame, mode, timeToFade, startAlpha, endAlpha)
 	fadeInfo.timeToFade = timeToFade
 	fadeInfo.startAlpha = startAlpha
 	fadeInfo.endAlpha = endAlpha
-	frame:SetAlpha(fadeInfo.startAlpha)
+	frame:SetAlpha(startAlpha)
 	frame.fadeInfo = fadeInfo
 	
 	for _, v in pairs(FADEFRAMES) do
@@ -69,6 +91,8 @@ local function FrameFade(frame, mode, timeToFade, startAlpha, endAlpha)
 	-- dummy frame to poke the Blizzard frameFadeManager awake, since its not directly accessible
 	UIFrameFadeIn(wakeUp, 0)
 end
+
+local dummyFunc = function() end
 
 local f = CreateFrame("Frame")
 
@@ -86,29 +110,35 @@ function f:OnEvent(event, addon)
 	
 	-- FrameXML\CompactUnitFrame.lua
 	hooksecurefunc("CompactUnitFrame_UpdateInRange", function(frame)
-		if FADEFRAMES[frame] then return end
-		
 		local inRange, checkedRange = UnitInRange(frame.displayedUnit)
+		
 		if checkedRange and not inRange then
-			if f[frame] == db.minAlpha then
+			if list[frame] == db.minAlpha or isSliding then
+				-- fadeInfo is only set after the first fading transition
+				if frame.fadeInfo and frame.fadeInfo.finishedFunc then return end
 				frame:SetAlpha(db.minAlpha)
 				frame.background:SetAlpha(db.minBgAlpha)
 			else
 				FrameFade(frame, "OUT", db.timeToFade, db.maxAlpha, db.minAlpha)
 				FrameFade(frame.background, "OUT", db.timeToFade, db.maxBgAlpha, db.minBgAlpha)
-				f[frame] = db.minAlpha
+				list[frame] = db.minAlpha
+				-- dummy func so it wont set alpha while doing a fading transition at the same time
+				frame.fadeInfo.finishedFunc = dummyFunc
 			end
 		else
-			if f[frame] == db.maxAlpha then
+			if list[frame] == db.maxAlpha or isSliding then
+				if frame.fadeInfo and frame.fadeInfo.finishedFunc then return end
 				frame:SetAlpha(db.maxAlpha)
 				frame.background:SetAlpha(db.maxBgAlpha)
 			else
 				FrameFade(frame, "IN", db.timeToFade, db.minAlpha, db.maxAlpha)
 				FrameFade(frame.background, "IN", db.timeToFade, db.minBgAlpha, db.maxBgAlpha)
-				f[frame] = db.maxAlpha
+				list[frame] = db.maxAlpha
+				frame.fadeInfo.finishedFunc = dummyFunc
 			end
 		end
 	end)
+	
 	self:UnregisterEvent(event)
 end
 
