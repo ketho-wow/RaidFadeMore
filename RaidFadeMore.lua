@@ -2,7 +2,7 @@
 --- Author: Ketho (EU-Boulderfist)		---
 --- License: Public Domain				---
 --- Created: 2014.08.10					---
---- Version: 0.4 [2014.08.10]			---
+--- Version: 0.5 [2014.08.10]			---
 -------------------------------------------
 --- Curse			http://www.curse.com/addons/wow/raidfademore
 --- WoWInterface	http://www.wowinterface.com/downloads/info23030-RaidFadeMore.html
@@ -81,8 +81,8 @@ local function FrameFade(frame, mode, timeToFade, startAlpha, endAlpha)
 	frame:SetAlpha(startAlpha)
 	frame.fadeInfo = fadeInfo
 	
-	for _, v in pairs(FADEFRAMES) do
-		if v == frame then
+	for i = 1, #FADEFRAMES do
+		if FADEFRAMES[i] == frame then
 			return
 		end
 	end
@@ -114,8 +114,7 @@ function f:OnEvent(event, addon)
 		
 		if checkedRange and not inRange then
 			if list[frame] == db.minAlpha or isSliding then
-				-- fadeInfo is only set after the first fading transition
-				if frame.fadeInfo and frame.fadeInfo.finishedFunc then return end
+				if frame.fadeInfo.finishedFunc then return end
 				frame:SetAlpha(db.minAlpha)
 				frame.background:SetAlpha(db.minBgAlpha)
 			else
@@ -127,7 +126,7 @@ function f:OnEvent(event, addon)
 			end
 		else
 			if list[frame] == db.maxAlpha or isSliding then
-				if frame.fadeInfo and frame.fadeInfo.finishedFunc then return end
+				if frame.fadeInfo.finishedFunc then return end
 				frame:SetAlpha(db.maxAlpha)
 				frame.background:SetAlpha(db.maxBgAlpha)
 			else

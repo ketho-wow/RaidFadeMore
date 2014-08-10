@@ -1,5 +1,5 @@
 ## Interface: 50400
-## Version 0.4
+## Version 0.5
 ## Title: RaidFadeMore
 ## Notes: Fade Blizzard Raid Frames
 ## Author: Ketho
