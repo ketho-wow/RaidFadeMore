@@ -2,7 +2,7 @@
 --- Author: Ketho (EU-Boulderfist)		---
 --- License: Public Domain				---
 --- Created: 2014.08.10					---
---- Version: 0.5 [2014.08.10]			---
+--- Version: 0.6 [2014.10.10]			---
 -------------------------------------------
 --- Curse			http://www.curse.com/addons/wow/raidfademore
 --- WoWInterface	http://www.wowinterface.com/downloads/info23030-RaidFadeMore.html
@@ -16,9 +16,9 @@ local isSliding
 local UnitInRange = UnitInRange
 
 local defaults = {
-	db_version = .3,
+	db_version = .6,
 	
-	timeToFade = .5,
+	timeToFade = .2,
 	minAlpha = .2,
 	maxAlpha = 1,
 	minBgAlpha = .5,
@@ -89,7 +89,9 @@ local function FrameFade(frame, mode, timeToFade, startAlpha, endAlpha)
 	tinsert(FADEFRAMES, frame)
 	
 	-- dummy frame to poke the Blizzard frameFadeManager awake, since its not directly accessible
-	UIFrameFadeIn(wakeUp, 0)
+	if #FADEFRAMES == 1 then
+		UIFrameFadeIn(wakeUp, 0)
+	end
 end
 
 local dummyFunc = function() end
@@ -104,9 +106,15 @@ function f:OnEvent(event, addon)
 	end
 	db = RaidFadeMoreDB
 	
-	local parent = "CompactUnitFrameProfilesGeneralOptionsFrame"
-	local slider = CreateSlider(parent, "TOPLEFT", parent.."AutoActivateBG", "BOTTOMLEFT", 10, -30, "|cff71D5FF"..SPELL_FAILED_OUT_OF_RANGE.." Fade|r", "minAlpha")
-	local sliderBg = CreateSlider(parent, "TOPLEFT", slider, "BOTTOMLEFT", 0, -40, "|cff71D5FF... "..BACKGROUND.." Fade|r", "minBgAlpha")
+	local parent = "CompactUnitFrameProfilesProfileSelectorButton"
+	local slider = CreateSlider(parent, "TOPLEFT", parent, "BOTTOMLEFT", 45, 00, "|cff71D5FFAlpha|r", "minAlpha")
+	local sliderBg = CreateSlider(parent, "TOPLEFT", slider, "BOTTOMLEFT", 0, -40, "|cff71D5FF"..BACKGROUND.." Alpha|r", "minBgAlpha")
+	local sliderTrans = CreateSlider(parent, "TOPLEFT", sliderBg, "BOTTOMLEFT", 0, -40, "|cff71D5FFFade "..ANIMATION.."|r", "timeToFade")
+	
+	local header = CreateFrame("Frame", nil, _G[parent]):CreateFontString()
+	header:SetPoint("TOPLEFT", parent, "TOPRIGHT", 45, 10)
+	header:SetFontObject("GameFontNormal")
+	header:SetText(NAME)
 	
 	-- FrameXML\CompactUnitFrame.lua
 	hooksecurefunc("CompactUnitFrame_UpdateInRange", function(frame)
