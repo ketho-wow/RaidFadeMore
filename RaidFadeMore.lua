@@ -2,7 +2,7 @@
 --- Author: Ketho (EU-Boulderfist)		---
 --- License: Public Domain				---
 --- Created: 2014.08.10					---
---- Version: 0.6 [2014.10.10]			---
+--- Version: 0.7 [2015.09.04]			---
 -------------------------------------------
 --- Curse			http://www.curse.com/addons/wow/raidfademore
 --- WoWInterface	http://www.wowinterface.com/downloads/info23030-RaidFadeMore.html

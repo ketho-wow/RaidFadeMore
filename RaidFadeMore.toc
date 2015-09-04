@@ -1,5 +1,5 @@
-## Interface: 60000
-## Version 0.6
+## Interface: 60200
+## Version 0.7
 ## Title: RaidFadeMore
 ## Notes: Fade Blizzard Raid Frames
 ## Author: Ketho
