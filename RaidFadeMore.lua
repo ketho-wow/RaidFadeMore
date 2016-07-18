@@ -2,7 +2,7 @@
 --- Author: Ketho (EU-Boulderfist)		---
 --- License: Public Domain				---
 --- Created: 2014.08.10					---
---- Version: 0.7 [2015.09.04]			---
+--- Version: 0.9 [2016.05.18]			---
 -------------------------------------------
 --- Curse			http://www.curse.com/addons/wow/raidfademore
 --- WoWInterface	http://www.wowinterface.com/downloads/info23030-RaidFadeMore.html
@@ -10,19 +10,19 @@
 local NAME = ...
 local db
 
-local list = {}
-local isSliding
-
-local UnitInRange = UnitInRange
-
 local defaults = {
-	db_version = .6,
+	db_version = .8,
 	
-	timeToFade = .2,
 	minAlpha = .2,
 	maxAlpha = 1,
+	
 	minBgAlpha = .5,
 	maxBgAlpha = 1,
+}
+
+local group = {
+	part = true, -- party, only check char 1 to 4
+	raid = true,
 }
 
 local function CreateSlider(parent, point, relativeTo, relativePoint, x, y, label, option)
@@ -41,25 +41,6 @@ local function CreateSlider(parent, point, relativeTo, relativePoint, x, y, labe
 		s.curLabel:SetText(v)
 	end)
 	
-	-- prevent fading transitions while moving the slider
-	if option == "minAlpha" then
-		s:SetScript("OnMouseDown", function(self, button)
-			isSliding = true
-		end)
-		
-		s:SetScript("OnMouseUp", function(self, button)
-			isSliding = false
-			
-			-- prevent fading transitions after moving the slider
-			for frame in pairs(list) do
-				if frame.displayedUnit then -- list is not up to date anymore after leaving a raid
-					local inRange, checkedRange = UnitInRange(frame.displayedUnit)
-					list[frame] = (checkedRange and not inRange) and db[option] or db.maxAlpha
-				end
-			end
-		end)
-	end
-	
 	-- fontstring
 	s.curLabel = s:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 	s.curLabel:SetPoint("TOP", s, "BOTTOM")
@@ -67,34 +48,6 @@ local function CreateSlider(parent, point, relativeTo, relativePoint, x, y, labe
 	
 	return s
 end
-
-local FADEFRAMES = FADEFRAMES
-local wakeUp = CreateFrame("Frame")
-
--- need a custom UIFrameFade function, since its secure and calls :Show (in combat)
-local function FrameFade(frame, mode, timeToFade, startAlpha, endAlpha)
-	local fadeInfo = {}
-	fadeInfo.mode = mode
-	fadeInfo.timeToFade = timeToFade
-	fadeInfo.startAlpha = startAlpha
-	fadeInfo.endAlpha = endAlpha
-	frame:SetAlpha(startAlpha)
-	frame.fadeInfo = fadeInfo
-	
-	for i = 1, #FADEFRAMES do
-		if FADEFRAMES[i] == frame then
-			return
-		end
-	end
-	tinsert(FADEFRAMES, frame)
-	
-	-- dummy frame to poke the Blizzard frameFadeManager awake, since its not directly accessible
-	if #FADEFRAMES == 1 then
-		UIFrameFadeIn(wakeUp, 0)
-	end
-end
-
-local dummyFunc = function() end
 
 local f = CreateFrame("Frame")
 
@@ -107,42 +60,25 @@ function f:OnEvent(event, addon)
 	db = RaidFadeMoreDB
 	
 	local parent = "CompactUnitFrameProfilesProfileSelectorButton"
-	local slider = CreateSlider(parent, "TOPLEFT", parent, "BOTTOMLEFT", 45, 00, "|cff71D5FFAlpha|r", "minAlpha")
+	local slider = CreateSlider(parent, "TOPLEFT", parent, "BOTTOMLEFT", 45, -15, "|cff71D5FFAlpha|r", "minAlpha")
 	local sliderBg = CreateSlider(parent, "TOPLEFT", slider, "BOTTOMLEFT", 0, -40, "|cff71D5FF"..BACKGROUND.." Alpha|r", "minBgAlpha")
-	local sliderTrans = CreateSlider(parent, "TOPLEFT", sliderBg, "BOTTOMLEFT", 0, -40, "|cff71D5FFFade "..ANIMATION.."|r", "timeToFade")
 	
 	local header = CreateFrame("Frame", nil, _G[parent]):CreateFontString()
-	header:SetPoint("TOPLEFT", parent, "TOPRIGHT", 45, 10)
+	header:SetPoint("TOPLEFT", parent, "TOPRIGHT", 45, 0)
 	header:SetFontObject("GameFontNormal")
 	header:SetText(NAME)
 	
 	-- FrameXML\CompactUnitFrame.lua
 	hooksecurefunc("CompactUnitFrame_UpdateInRange", function(frame)
+		if not group[strsub(frame.displayedUnit, 1, 4)] then return end -- ignore player, nameplates
 		local inRange, checkedRange = UnitInRange(frame.displayedUnit)
 		
 		if checkedRange and not inRange then
-			if list[frame] == db.minAlpha or isSliding then
-				if frame.fadeInfo.finishedFunc then return end
-				frame:SetAlpha(db.minAlpha)
-				frame.background:SetAlpha(db.minBgAlpha)
-			else
-				FrameFade(frame, "OUT", db.timeToFade, db.maxAlpha, db.minAlpha)
-				FrameFade(frame.background, "OUT", db.timeToFade, db.maxBgAlpha, db.minBgAlpha)
-				list[frame] = db.minAlpha
-				-- dummy func so it wont set alpha while doing a fading transition at the same time
-				frame.fadeInfo.finishedFunc = dummyFunc
-			end
+			frame:SetAlpha(db.minAlpha)
+			frame.background:SetAlpha(db.minBgAlpha)
 		else
-			if list[frame] == db.maxAlpha or isSliding then
-				if frame.fadeInfo.finishedFunc then return end
-				frame:SetAlpha(db.maxAlpha)
-				frame.background:SetAlpha(db.maxBgAlpha)
-			else
-				FrameFade(frame, "IN", db.timeToFade, db.minAlpha, db.maxAlpha)
-				FrameFade(frame.background, "IN", db.timeToFade, db.minBgAlpha, db.maxBgAlpha)
-				list[frame] = db.maxAlpha
-				frame.fadeInfo.finishedFunc = dummyFunc
-			end
+			frame:SetAlpha(db.maxAlpha)
+			frame.background:SetAlpha(db.maxBgAlpha)
 		end
 	end)
 	
