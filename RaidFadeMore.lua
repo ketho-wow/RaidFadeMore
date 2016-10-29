@@ -1,11 +1,5 @@
--------------------------------------------
---- Author: Ketho (EU-Boulderfist)		---
---- License: Public Domain				---
---- Created: 2014.08.10					---
---- Version: 0.9 [2016.05.18]			---
--------------------------------------------
---- Curse			http://www.curse.com/addons/wow/raidfademore
---- WoWInterface	http://www.wowinterface.com/downloads/info23030-RaidFadeMore.html
+-- Author: Ketho (EU-Boulderfist)
+-- License: Public Domain
 
 local NAME = ...
 local db
