@@ -1,9 +1,13 @@
-## Interface: 80000
+## Interface-Retail: 90005
+## Interface-Classic: 11307
+## Interface-BC: 20501
 ## Version: @project-version@
 ## Title: RaidFadeMore
 ## Notes: Fade Blizzard Raid Frames
 ## Author: Ketho
 ## SavedVariables: RaidFadeMoreDB
 ## Dependencies: Blizzard_CUFProfiles
+## X-Curse-Project-ID: 83767
+## X-WoWI-ID: 23030
 
 RaidFadeMore.lua
