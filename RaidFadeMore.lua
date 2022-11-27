@@ -1,12 +1,14 @@
 local NAME = ...
+local ACR = LibStub("AceConfigRegistry-3.0")
+local ACD = LibStub("AceConfigDialog-3.0")
 local db
 
 local defaults = {
 	db_version = .8,
-	
+
 	minAlpha = .2,
 	maxAlpha = 1,
-	
+
 	minBgAlpha = .5,
 	maxBgAlpha = 1,
 }
@@ -16,54 +18,66 @@ local group = {
 	raid = true,
 }
 
-local function CreateSlider(parent, point, relativeTo, relativePoint, x, y, label, option)
-	-- slider
-	local s = CreateFrame("Slider", nil, _G[parent], "CompactUnitFrameProfilesSliderTemplate")
-	s:SetPoint(point, relativeTo, relativePoint, x, y)
-	s.label:SetText(label)
-	s.minLabel:SetText(0); s.maxLabel:SetText(1)
-	s:SetValueStep(5); s:SetMinMaxValues(0, 100)
-	s:SetObeyStepOnDrag(true)
-	s:SetValue(db[option]*100)
-	
-	s:SetScript("OnValueChanged", function(self, value)
-		local v = value/100
-		db[option] = v
-		s.curLabel:SetText(v)
-	end)
-	
-	-- fontstring
-	s.curLabel = s:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-	s.curLabel:SetPoint("TOP", s, "BOTTOM")
-	s.curLabel:SetText(db[option])
-	
-	return s
-end
+local options = {
+	type = "group",
+	name = format("%s |cffADFF2F%s|r", NAME, GetAddOnMetadata(NAME, "Version")),
+	args = {
+		group1 = {
+			type = "group", order = 1,
+			name = " ",
+			inline = true,
+			args = {
+				minalpha = {
+					type = "range", order = 1,
+					width = "double", descStyle = "",
+					name = "|cff71D5FFAlpha|r",
+					get = function(i) return db.minAlpha end,
+					set = function(i, v) db.minAlpha = v end,
+					min = 0, max = 1, step = .01,
+				},
+				spacing1 = {type = "description", order = 2, name = " "},
+				minBgAlpha = {
+					type = "range", order = 3,
+					width = "double", descStyle = "",
+					name = "|cff71D5FF"..BACKGROUND.." Alpha|r",
+					get = function(i) return db.minBgAlpha end,
+					set = function(i, v) db.minBgAlpha = v end,
+					min = 0, max = 1, step = .01,
+				},
+				spacing2 = {type = "description", order = 4, name = " "},
+				reset = {
+					type = "execute", order = 5,
+					width = "half", descStyle = "",
+					name = RESET,
+					func = function()
+						RaidFadeMoreDB = CopyTable(defaults)
+						db = RaidFadeMoreDB
+					end,
+				},
+			},
+		},
+	},
+}
 
 local f = CreateFrame("Frame")
 
 function f:OnEvent(event, addon)
 	if addon ~= NAME then return end
-	
+
 	if not RaidFadeMoreDB or defaults.db_version > RaidFadeMoreDB.db_version then
 		RaidFadeMoreDB = CopyTable(defaults)
 	end
 	db = RaidFadeMoreDB
-	
-	local parent = "CompactUnitFrameProfilesProfileSelectorButton"
-	local slider = CreateSlider(parent, "TOPLEFT", parent, "BOTTOMLEFT", 45, -15, "|cff71D5FFAlpha|r", "minAlpha")
-	local sliderBg = CreateSlider(parent, "TOPLEFT", slider, "BOTTOMLEFT", 0, -40, "|cff71D5FF"..BACKGROUND.." Alpha|r", "minBgAlpha")
-	
-	local header = CreateFrame("Frame", nil, _G[parent]):CreateFontString()
-	header:SetPoint("TOPLEFT", parent, "TOPRIGHT", 45, 0)
-	header:SetFontObject("GameFontNormal")
-	header:SetText(NAME)
-	
+
+	ACR:RegisterOptionsTable(NAME, options)
+	ACD:AddToBlizOptions(NAME, NAME)
+	ACD:SetDefaultSize(NAME, 400, 280)
+
 	-- FrameXML\CompactUnitFrame.lua
 	hooksecurefunc("CompactUnitFrame_UpdateInRange", function(frame)
 		if not group[strsub(frame.displayedUnit, 1, 4)] then return end -- ignore player, nameplates
 		local inRange, checkedRange = UnitInRange(frame.displayedUnit)
-		
+
 		if checkedRange and not inRange then
 			frame:SetAlpha(db.minAlpha)
 			frame.background:SetAlpha(db.minBgAlpha)
@@ -72,9 +86,19 @@ function f:OnEvent(event, addon)
 			frame.background:SetAlpha(db.maxBgAlpha)
 		end
 	end)
-	
+
 	self:UnregisterEvent(event)
 end
 
 f:RegisterEvent("ADDON_LOADED")
 f:SetScript("OnEvent", f.OnEvent)
+
+for i, v in pairs({"rfm", "raidfade", "raidfademore"}) do
+	_G["SLASH_RAIDFADEMORE"..i] = "/"..v
+end
+
+function SlashCmdList.RAIDFADEMORE()
+	if not ACD.OpenFrames.RaidFadeMore then
+		ACD:Open(NAME)
+	end
+end

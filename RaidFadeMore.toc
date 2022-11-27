@@ -1,13 +1,20 @@
-## Interface-Retail: 90005
-## Interface-Classic: 11307
-## Interface-BC: 20501
+## Interface: 100002
+## Interface-Wrath: 30400
+## Interface-Classic: 11403
 ## Version: @project-version@
 ## Title: RaidFadeMore
 ## Notes: Fade Blizzard Raid Frames
 ## Author: Ketho
 ## SavedVariables: RaidFadeMoreDB
-## Dependencies: Blizzard_CUFProfiles
 ## X-Curse-Project-ID: 83767
 ## X-WoWI-ID: 23030
+## X-Wago-ID: 9rN45Y6D
+
+#@no-lib-strip@
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+Libs\AceGUI-3.0\AceGUI-3.0.xml
+Libs\AceConfig-3.0\AceConfig-3.0.xml
+#@end-no-lib-strip@
 
 RaidFadeMore.lua
