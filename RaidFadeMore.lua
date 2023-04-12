@@ -30,7 +30,7 @@ local options = {
 				minalpha = {
 					type = "range", order = 1,
 					width = "double", descStyle = "",
-					name = "|cff71D5FFAlpha|r",
+					name = "|cff71D5FFOut of Range Alpha|r",
 					get = function(i) return db.minAlpha end,
 					set = function(i, v) db.minAlpha = v end,
 					min = 0, max = 1, step = .01,
@@ -39,14 +39,32 @@ local options = {
 				minBgAlpha = {
 					type = "range", order = 3,
 					width = "double", descStyle = "",
-					name = "|cff71D5FF"..BACKGROUND.." Alpha|r",
+					name = "|cff71D5FFOut of Range "..BACKGROUND.." Alpha|r",
 					get = function(i) return db.minBgAlpha end,
 					set = function(i, v) db.minBgAlpha = v end,
 					min = 0, max = 1, step = .01,
 				},
 				spacing2 = {type = "description", order = 4, name = " "},
+				maxalpha = {
+					type = "range", order = 5,
+					width = "double", descStyle = "",
+					name = "|cff71D5FFIn Range Alpha|r",
+					get = function(i) return db.maxAlpha end,
+					set = function(i, v) db.maxAlpha = v end,
+					min = 0, max = 1, step = .01,
+				},
+				spacing3 = {type = "description", order = 6, name = " "},
+				maxBgAlpha = {
+					type = "range", order = 7,
+					width = "double", descStyle = "",
+					name = "|cff71D5FFIn Range "..BACKGROUND.." Alpha|r",
+					get = function(i) return db.maxBgAlpha end,
+					set = function(i, v) db.maxBgAlpha = v end,
+					min = 0, max = 1, step = .01,
+				},
+				spacing4 = {type = "description", order = 8, name = " "},
 				reset = {
-					type = "execute", order = 5,
+					type = "execute", order = 9,
 					width = "half", descStyle = "",
 					name = RESET,
 					func = function()
