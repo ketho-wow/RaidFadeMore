@@ -2,7 +2,6 @@ local NAME = ...
 local ACR = LibStub("AceConfigRegistry-3.0")
 local ACD = LibStub("AceConfigDialog-3.0")
 local db
-local GetAddOnMetadata = GetAddOnMetadata or C_AddOns.GetAddOnMetadata
 
 local defaults = {
 	db_version = 2,
@@ -20,7 +19,7 @@ local f = CreateFrame("Frame")
 
 local options = {
 	type = "group",
-	name = format("%s |cffADFF2F%s|r", NAME, GetAddOnMetadata(NAME, "Version")),
+	name = format("%s |cffADFF2F%s|r", NAME, C_AddOns.GetAddOnMetadata(NAME, "Version")),
 	args = {
 		group1 = {
 			type = "group", order = 1,
